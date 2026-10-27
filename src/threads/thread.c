@@ -174,6 +174,7 @@ tid_t
 thread_create (const char *name, int priority,
                thread_func *function, void *aux) 
 {
+  
   struct thread *t;
   struct kernel_thread_frame *kf;
   struct switch_entry_frame *ef;
@@ -189,6 +190,7 @@ thread_create (const char *name, int priority,
 
   /* Initialize thread. */
   init_thread (t, name, priority);
+  t->wakeup_tick = 0;
   tid = t->tid = allocate_tid ();
 
   /* Stack frame for kernel_thread(). */
