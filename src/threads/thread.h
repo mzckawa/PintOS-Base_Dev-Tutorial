@@ -124,6 +124,8 @@ struct thread *thread_current (void);
 tid_t thread_tid (void);
 const char *thread_name (void);
 
+extern struct list sleep_list;
+
 void thread_exit (void) NO_RETURN;
 void thread_yield (void);
 

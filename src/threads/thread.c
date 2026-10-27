@@ -33,7 +33,7 @@ static struct list all_list;
 they are waiting on some dependecy, let it be a lock, a network response, 
 disk operation, etc. 
 */
-static struct list sleep_list;
+struct list sleep_list;
 
 /* Idle thread. */
 static struct thread *idle_thread;

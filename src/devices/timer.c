@@ -95,11 +95,18 @@ timer_elapsed (int64_t then)
 void
 timer_sleep (int64_t ticks) 
 {
-  int64_t start = timer_ticks ();
-
+  
   ASSERT (intr_get_level () == INTR_ON);
-  while (timer_elapsed (start) < ticks) 
-    thread_yield ();
+
+  if (ticks>0){
+  
+  int64_t start = timer_ticks ();
+  thread_sleep_until(start + ticks); // waiting time relative to the current time
+  }
+
+  else{ // if ticks are equal to zero or negative, the thread shouldn't be blocked, so this function shall return immediately
+    return;
+  }
 }
 
 /* Sleeps for approximately MS milliseconds.  Interrupts must be
@@ -178,6 +185,7 @@ timer_interrupt (struct intr_frame *args UNUSED)
 {
   ticks++;
   thread_tick ();
+  check_wakeup_threads(ticks);
 }
 
 /* Returns true if LOOPS iterations waits for more than one timer
@@ -251,20 +259,67 @@ real_time_delay (int64_t num, int32_t denom)
   busy_wait (loops_per_tick * num / 1000 * TIMER_FREQ / (denom / 1000)); 
 }
 void update_min_tick(void) {
-  /* Mel vai implementar a varredura da sleep_queue aqui para achar o menor tick */
-}
 
+  // if the sleep list is empty, we save the global minimum tick
+  if (list_empty(&sleep_list)){
+    min_tick = -1; 
+  }
+  else{
+  // if it's not empty, we only need to check the first thread's tick, since our sleep list is ordered, and then update the minimun tick according to the found value
+  struct list_elem *e = list_front(&sleep_list);
+  struct thread *t = list_entry(e, struct thread, elem);
+  min_tick = t->wakeup_tick;
+  }
+}
 int64_t get_min_tick(void) {
   return min_tick;
 }
 
+/* creating a function to compare the ticks between 
+two threads, so that we can insert the elements in 
+the sleep_list in order */
+
+bool thread_ticks_comparison(const struct list_elem *a, const struct list_elem *b, void *aux UNUSED)
+{
+  struct thread *ta = list_entry(a, struct thread, elem);
+  struct thread *tb = list_entry(b, struct thread, elem);
+  return ta->wakeup_tick < tb->wakeup_tick;
+}
 void thread_sleep_until(int64_t ticks) {
+
   struct thread *curr = thread_current();
+  enum intr_level old_level; // saving the level right before the interruption
+
+  // disabling interrupts, in ornder to protect the manipulation of the list and its state
+  old_level = intr_disable();
+
   curr->wakeup_tick = ticks;
-  /* Mel vai inserir a thread na sleep_queue aqui!!!!!!! */
+  list_insert_ordered(&sleep_list, &curr->elem, thread_ticks_comparison, NULL); // keeping the list ordered, we only need to check its first element, reducing the complexity
   thread_block(); /* bloqueia a thread atual */
+
+  /* after waking up, the thread will continue from 
+  the point it was executing until reaching thread_block,
+  so the first thing we need to do is restoring its level
+  */
+  intr_set_level(old_level);
+
 }
 
 void check_wakeup_threads(int64_t current_ticks) {
-  // se current_ticks >= min_tick, buscar a thread e chamar thread_unblock() 
+
+  while (!list_empty(&sleep_list)){ // checking the sleep list until it's empty 
+
+    struct list_elem *e = list_front(&sleep_list); // taking the first element of the list without removing it (because we don't know whether its wakeup time has arrived or not)
+    struct thread *t = list_entry(e, struct thread, elem);
+
+    if (current_ticks >= t->wakeup_tick){
+
+      list_pop_front(&sleep_list); // if the first element of the sleep list, which is ordered, needs to wakeup, we do it
+      thread_unblock(t); // changing the state to READY and adding the thread to the ready list
+    }
+
+    else{ // if the first element hasn't reached the time to wakeup, none of the following will have
+      break;
+    }
+  }
 }
