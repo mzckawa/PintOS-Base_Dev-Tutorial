@@ -7,7 +7,8 @@
 #include "threads/interrupt.h"
 #include "threads/synch.h"
 #include "threads/thread.h"
-  
+ 
+static int64_t min_tick = -1;
 /* See [8254] for hardware details of the 8254 timer chip. */
 
 #if TIMER_FREQ < 19
@@ -16,6 +17,11 @@
 #if TIMER_FREQ > 1000
 #error TIMER_FREQ <= 1000 recommended
 #endif
+void thread_sleep_until(int64_t ticks);
+void check_wakeup_threads(int64_t current_ticks);
+void update_min_tick(void);
+int64_t get_min_tick(void);
+
 
 /* Number of timer ticks since OS booted. */
 static int64_t ticks;
@@ -243,4 +249,22 @@ real_time_delay (int64_t num, int32_t denom)
      the possibility of overflow. */
   ASSERT (denom % 1000 == 0);
   busy_wait (loops_per_tick * num / 1000 * TIMER_FREQ / (denom / 1000)); 
+}
+void update_min_tick(void) {
+  /* Mel vai implementar a varredura da sleep_queue aqui para achar o menor tick */
+}
+
+int64_t get_min_tick(void) {
+  return min_tick;
+}
+
+void thread_sleep_until(int64_t ticks) {
+  struct thread *curr = thread_current();
+  curr->wakeup_tick = ticks;
+  /* Mel vai inserir a thread na sleep_queue aqui!!!!!!! */
+  thread_block(); /* bloqueia a thread atual */
+}
+
+void check_wakeup_threads(int64_t current_ticks) {
+  // se current_ticks >= min_tick, buscar a thread e chamar thread_unblock() 
 }

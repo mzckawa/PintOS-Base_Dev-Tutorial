@@ -1,0 +1,12 @@
+{
+  "name": "Pintos Environment",
+  "image": "pkuflyingpig/pintos:latest",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools"
+      ]
+    }
+  },
+  "remoteUser": "root"
+}
