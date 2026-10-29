@@ -1,14 +1,21 @@
 // Definition of fixed point arithmetics
 #include <stdint.h>
-# define fp_one 1<<14
+# define fp_one (1<<14)
 
 int32_t fp_conversion(signed int n){
     return n * fp_one;
 }
 
-int32_t int32_conversion(int32_t x){
+// truncated conversion of fixed-point value (rounding toward zero)
+int32_t fp_to_int_trunc(int32_t x){
     return x / fp_one;
 }
+
+// conversion of fixed-point to integer (rounding to nearest)
+int32_t fp_to_int_round(int32_t x){
+    return x > 0 ? (x + fp_one)/2 : (x - fp_one)/2;
+}
+
 
 // sum of two fixed point values; returns the result also in fixed point (fp) format
 int32_t fp_sum(int32_t x, int32_t y){
@@ -23,12 +30,12 @@ int32_t fp_subtraction(int32_t x, int32_t y){
 
 // sum of a fixed point value and an integer
 int32_t fp_int_sum(int32_t x, int n){
-    int32_t sum = int32_conversion(x) + n;
+    int32_t sum = int32_conv_trunc(x) + n;
     return sum;
 }
 
 int32_t fp_int_subtraction(int32_t x, int n){
-    int32_t sub = int32_conversion(x) - n;
+    int32_t sub = int32_conv_trunc(x) - n;
     return sub;
 }
 
@@ -40,11 +47,11 @@ int32_t fp_multip(int32_t x, int32_t y){
     Since our desired result is X * Y * fp_one, which is the multiplication of the real values in fixed_point format, we will use the integer conversion
     function in order to divide x * y by fp_one.
     */
-    return int32_conversion((int64_t) x * y);
+    return int32_conv_trunc((int64_t) x * y);
 }
 
 int32_t fp_int_multip(int32_t x, int n){
-    return int32_conversion((int64_t) x * n);
+    return int32_conv_trunc((int64_t) x * n);
 }
 
 int32_t fp_division(int32_t x, int32_t y){ 

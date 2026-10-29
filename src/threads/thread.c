@@ -11,6 +11,7 @@
 #include "threads/switch.h"
 #include "threads/synch.h"
 #include "threads/vaddr.h"
+#include "threads/fixed-point.h"
 #ifdef USERPROG
 #include "userprog/process.h"
 #endif
@@ -20,6 +21,8 @@
    of thread.h for details. */
 #define THREAD_MAGIC 0xcd6abf4b
 #define A 55
+#define PRI_MAX 0
+#define PRI_MAX 63  
 
 /* List of processes in THREAD_READY state, that is, processes
    that are ready to run but not actually running. */
@@ -34,6 +37,8 @@ they are waiting on some dependecy, let it be a lock, a network response,
 disk operation, etc. 
 */
 struct list sleep_list;
+int32_t load_avg = 0;
+int32_t decay;
 
 /* Idle thread. */
 static struct thread *idle_thread;
@@ -106,6 +111,8 @@ thread_init (void)
   init_thread (initial_thread, "main", PRI_DEFAULT);
   initial_thread->status = THREAD_RUNNING;
   initial_thread->tid = allocate_tid ();
+  initial_thread->nice = 0;
+  inicial->thread->recent_cpu = 0;
 }
 
 /* Starts preemptive thread scheduling by enabling interrupts.
@@ -350,6 +357,25 @@ thread_foreach (thread_action_func *func, void *aux)
     }
 }
 
+// function that calculates the value of the thread's priority and updates directly in the thread's struct
+void thread_compute_priority(struct thread *t){
+
+  int priority = PRI_MAX - (fp_to_int_round((t->recent_cpu)/4)) - ((t->nice) * 2);
+
+  // ensuring the priority respects the determined limits
+  if (priority > PRI_MAX){
+    priority = PRI_MAX;
+  }
+
+  else if (priority < PRI_MIN){
+    priority = PRI_MIN;
+  }
+
+  // updating the thread attribute within the thread's structure
+  t->priority = priority;
+
+}
+
 /* Sets the current thread's priority to NEW_PRIORITY. */
 void
 thread_set_priority (int new_priority) 
@@ -366,35 +392,87 @@ thread_get_priority (void)
 
 /* Sets the current thread's nice value to NICE. */
 void
-thread_set_nice (int nice UNUSED) 
+thread_set_nice (int nice) 
 {
-  /* Not yet implemented. */
+  struct thread *t = thread_current();
+  t->nice = nice;
+  thread_compute_priority(t); // since we have a new nice value, we need to recalculate the priority, which depends on the value of nice
+
 }
 
 /* Returns the current thread's nice value. */
 int
 thread_get_nice (void) 
 {
-  /* Not yet implemented. */
-  return 0;
+  return (thread_current->nice) * 100;
+}
+
+// computes and updates the new value of load_avg
+void thread_compute_load_avg(void){
+  load_avg = (59/60) * load_avg + (1/60) * list_size(&ready_threads);
 }
 
 /* Returns 100 times the system load average. */
 int
 thread_get_load_avg (void) 
 {
-  /* Not yet implemented. */
-  return 0;
+  return load_avg * 100;
 }
 
 /* Returns 100 times the current thread's recent_cpu value. */
 int
 thread_get_recent_cpu (void) 
 {
-  /* Not yet implemented. */
-  return 0;
+  return (thread_current()->recent_cpu) * 100;
 }
-
+
+// calculates the recent cpu of a given thread (doesn't need to be the current)
+void thread_compute_rec_cpu(struct thread *t){
+  int32_t recent_cpu = decay * t->recent_cpu + t->nice;
+  t->recent_cpu = recent_cpu;
+}
+
+void thread_rec_cpu_increment(struct thread *t){
+
+  //checking whether the thread is the idle one, otherwise we can increment its recent_cpu
+  if (t != idle_thread){
+  t->recent_cpu += fp_one; // incrementing the recent_cpu in the fixed point format
+  }
+}
+
+void thread_compute_decay(void){
+  decay = (2 * load_avg) / (2 * load_avg + 1);
+}
+
+void thread_update_priority_all(void){
+
+  struct list_elem *initial_thread = list_begin(&all_list);
+  struct list_elem *tail = list_end(&all_list);
+
+  // iterating thorugh all the threads, including the last one
+  for (struct list_elem *e = initial_thread; e != tail; e = list_next(e)){
+    
+    // retrieving the thread associated with the list_elem "e"
+    struct thread *t = list_entry(e, struct thread, allelem);
+
+    // updating the thread's priority
+    t->priority = thread_compute_priority(t);
+  }
+}
+
+// same logic used in thread_update_priority_all
+void thread_update_rec_cpu_all(void){
+
+  struct list_elem *initial_elem = list_begin(&all_list);
+  struct list_elem *tail = list_end(&all_list);
+
+  for (struct elem *e = initial_elem; e != tail; e = list_next(e)){
+
+    struct thread *t = list_entry(e, struct thread, allelem);
+    t->recent_cpu = thread_compute_rec_cpu(t);
+  }
+}
+
 /* Idle thread.  Executes when no other thread is ready to run.
 
    The idle thread is initially put on the ready list by

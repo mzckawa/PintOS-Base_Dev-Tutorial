@@ -82,7 +82,10 @@ typedef int tid_t;
    blocked state is on a semaphore wait list. */
 struct thread
   {
-    int64_t wakeup_tick; // tick adicionado nina             
+    int64_t wakeup_tick; // tick adicionado nina 
+    int32_t nice; // although nice ranges from -20 to 20, it will be envolved in operations with 32-bit integers, so it is best to keep this and recent_cpu in int32_t
+    int32_t recent_cpu;
+
     /* Owned by thread.c. */
     tid_t tid;                          /* Thread identifier. */
     enum thread_status status;          /* Thread state. */
