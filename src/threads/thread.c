@@ -257,7 +257,7 @@ bool thread_priority_comparison(const struct list_elem *a, const struct list_ele
 {
   struct thread *ta = list_entry(a, struct thread, elem);
   struct thread *tb = list_entry(b, struct thread, elem);
-  return ta->priority < tb->priority;
+  return ta->priority > tb->priority; // we use the "greater than" (>) operator so that the list is ordered with the highest priorities first 
 }
 
 
@@ -327,7 +327,7 @@ thread_yield (void)
 
   old_level = intr_disable ();
   if (cur != idle_thread) 
-    list_push_back (&ready_list, &cur->elem);
+    list_insert_ordered(&ready_list, &cur->elem, thread_priority_comparison, NULL);
   cur->status = THREAD_READY;
   schedule ();
   intr_set_level (old_level);
