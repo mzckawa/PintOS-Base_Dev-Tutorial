@@ -112,7 +112,7 @@ thread_init (void)
   initial_thread->status = THREAD_RUNNING;
   initial_thread->tid = allocate_tid ();
   initial_thread->nice = 0;
-  inicial->thread->recent_cpu = 0;
+  inicial_thread->recent_cpu = 0;
 }
 
 /* Starts preemptive thread scheduling by enabling interrupts.
@@ -412,7 +412,7 @@ thread_get_nice (void)
 
 // computes and updates the new value of load_avg
 void thread_compute_load_avg(void){
-  load_avg = (59/60) * load_avg + (1/60) * list_size(&ready_threads);
+  load_avg = (59/60) * load_avg + (1/60) * list_size(&ready_list);
 }
 
 /* Returns 100 times the system load average. */
@@ -459,7 +459,7 @@ void thread_update_priority_all(void){
     struct thread *t = list_entry(e, struct thread, allelem);
 
     // updating the thread's priority
-    t->priority = thread_compute_priority(t);
+    thread_compute_priority(t);
   }
 }
 
@@ -469,10 +469,10 @@ void thread_update_rec_cpu_all(void){
   struct list_elem *initial_elem = list_begin(&all_list);
   struct list_elem *tail = list_end(&all_list);
 
-  for (struct elem *e = initial_elem; e != tail; e = list_next(e)){
+  for (struct list_elem *e = initial_elem; e != tail; e = list_next(e)){
 
     struct thread *t = list_entry(e, struct thread, allelem);
-    t->recent_cpu = thread_compute_rec_cpu(t);
+    thread_compute_rec_cpu(t);
   }
 }
 
