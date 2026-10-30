@@ -129,6 +129,7 @@ tid_t thread_tid (void);
 const char *thread_name (void);
 
 extern struct list sleep_list;
+extern struct list ready_list;
 
 void thread_exit (void) NO_RETURN;
 void thread_yield (void);
