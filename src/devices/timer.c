@@ -218,7 +218,7 @@ timer_interrupt (struct intr_frame *args UNUSED)
 
   // if the current thread has lost the highest priority after the updates, it asks for preemption
   if (thread_mlfqs && !list_empy(&ready_list)){
-    struct thread *top = list_entry (list_begin(&ready_list)), struct thread, elem);
+    struct thread *top = list_entry (list_begin(&ready_list), struct thread, elem);
     if (thread_current() -> priority < top -> priority){
       intr_yield_on_return();
     }
