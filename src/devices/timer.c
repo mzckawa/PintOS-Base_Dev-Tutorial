@@ -204,6 +204,11 @@ timer_interrupt (struct intr_frame *args UNUSED)
     if (ticks % 4 == 0) 
     {
       thread_update_priority_all ();
+
+    // updating the ready_list's order
+    if (!list_empty (&ready_list)){
+      list_sort(&ready_list, thread_priority_comparison, NULL);
+    }
     }
   }
 
