@@ -185,6 +185,28 @@ timer_interrupt (struct intr_frame *args UNUSED)
 {
   ticks++;
   thread_tick ();
+
+  /* BLOCO ADVANCED SCHEDULER */
+  if (thread_mlfqs) 
+  {
+    /* 1. Aumenta recent_cpu da thread atual em 1 a cada tick */
+    thread_rec_cpu_increment (thread_current ());
+
+    /* 2. Recalcula load_avg, decay e recent_cpu de TODAS as threads a cada 1 segundo (TIMER_FREQ) */
+    if (ticks % TIMER_FREQ == 0) 
+    {
+      thread_compute_load_avg ();
+      thread_compute_decay ();
+      thread_update_rec_cpu_all ();
+    }
+
+    /* 3. Recalcula a prioridade de TODAS as threads a cada 4 ticks */
+    if (ticks % 4 == 0) 
+    {
+      thread_update_priority_all ();
+    }
+  }
+
   check_wakeup_threads(ticks);
 }
 

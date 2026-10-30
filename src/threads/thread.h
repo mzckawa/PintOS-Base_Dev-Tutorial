@@ -145,4 +145,10 @@ void thread_set_nice (int);
 int thread_get_recent_cpu (void);
 int thread_get_load_avg (void);
 
+void thread_compute_load_avg(void);
+void thread_compute_decay(void);
+void thread_update_priority_all(void);
+void thread_update_rec_cpu_all(void);
+void thread_rec_cpu_increment(struct thread *t);
+
 #endif /* threads/thread.h */
