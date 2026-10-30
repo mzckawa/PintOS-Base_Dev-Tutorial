@@ -112,7 +112,7 @@ thread_init (void)
   initial_thread->status = THREAD_RUNNING;
   initial_thread->tid = allocate_tid ();
   initial_thread->nice = 0;
-  inicial_thread->recent_cpu = 0;
+  initial_thread->recent_cpu = 0;
 }
 
 /* Starts preemptive thread scheduling by enabling interrupts.
@@ -407,7 +407,7 @@ thread_set_nice (int nice)
 int
 thread_get_nice (void) 
 {
-  return (thread_current->nice) * 100;
+  return (thread_current()->nice) * 100;
 }
 
 // computes and updates the new value of load_avg
