@@ -407,26 +407,34 @@ thread_set_nice (int nice)
 int
 thread_get_nice (void) 
 {
-  return (thread_current()->nice) * 100;
+  return thread_current()->nice;
 }
-
+/*
+load\_avg = div\_int (add\_fp (mul\_int (load\_avg, 59), mul\_int (fp\_one, ready\_threads)), 60);
+*/
 // computes and updates the new value of load_avg
 void thread_compute_load_avg(void){
-  load_avg = (59/60) * load_avg + (1/60) * list_size(&ready_list);
+
+  int ready_threads = list_size(&ready_list);
+  if (thread_current() != idle_thread){
+    ready_threads++; // if the current thread isn't the ready thread, ready_threads is equal to the threads on the ready list plus the one that's executing right now
+  }
+  //since only ready_threads isn't at the fixed_point format already, we need to convert it 
+  load_avg = fp_int_division((fp_int_multip(59, load_avg) + fp_conversion(ready_threads)), 60);
 }
 
 /* Returns 100 times the system load average. */
 int
 thread_get_load_avg (void) 
 {
-  return load_avg * 100;
+  return fp_to_int_round(fp_int_multip(load_avg, 100));
 }
 
 /* Returns 100 times the current thread's recent_cpu value. */
 int
 thread_get_recent_cpu (void) 
 {
-  return (thread_current()->recent_cpu) * 100;
+  return fp_to_int_round(fp_int_multip((thread_current()->recent_cpu), 100));
 }
 
 // calculates the recent cpu of a given thread (doesn't need to be the current)
