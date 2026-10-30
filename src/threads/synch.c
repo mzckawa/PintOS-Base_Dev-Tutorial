@@ -36,10 +36,10 @@
    nonnegative integer along with two atomic operators for
    manipulating it:
 
-   - down or "P": wait for the value to become positive, then
+- down or "P": wait for the value to become positive, then
      decrement it.
 
-   - up or "V": increment the value (and wake up one waiting
+- up or "V": increment the value (and wake up one waiting
      thread, if any). */
 void
 sema_init (struct semaphore *sema, unsigned value) 
@@ -196,6 +196,11 @@ lock_acquire (struct lock *lock)
   ASSERT (!intr_context ());
   ASSERT (!lock_held_by_current_thread (lock));
 
+  if (!thread_mlfqs)
+    {
+      /* Vazio, pois não há priority donation implementado */
+    }
+
   sema_down (&lock->semaphore);
   lock->holder = thread_current ();
 }
@@ -232,6 +237,12 @@ lock_release (struct lock *lock)
   ASSERT (lock_held_by_current_thread (lock));
 
   lock->holder = NULL;
+
+  if (!thread_mlfqs)
+    {
+      /* Vazio, pois não há priority donation implementado */
+    }
+
   sema_up (&lock->semaphore);
 }
 
