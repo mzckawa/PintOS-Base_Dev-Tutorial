@@ -151,4 +151,6 @@ void thread_update_priority_all(void);
 void thread_update_rec_cpu_all(void);
 void thread_rec_cpu_increment(struct thread *t);
 
+void thread_test_preemption (void);
+
 #endif /* threads/thread.h */

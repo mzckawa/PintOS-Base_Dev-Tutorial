@@ -484,6 +484,22 @@ void thread_update_rec_cpu_all(void){
   }
 }
 
+// function to help testing whether the current thread should yield the CPU or not
+void thread_test_preemption(void){
+
+  if(!list_empty(&ready_list)){
+    struct thread *highest = list_entry (list_begin(&ready_list), struct thread, elem);
+    if (highest->priority > thread_current()->priority){
+      if (intr_context()){
+        intr_yield_on_return();
+      }
+      else{
+        thread_yield();
+      }
+    }
+  }
+}
+
 /* Idle thread.  Executes when no other thread is ready to run.
 
    The idle thread is initially put on the ready list by
