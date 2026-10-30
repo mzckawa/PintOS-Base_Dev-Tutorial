@@ -178,7 +178,7 @@ timer_print_stats (void)
 {
   printf ("Timer: %"PRId64" ticks\n", timer_ticks ());
 }
-
+
 /* Timer interrupt handler. */
 static void
 timer_interrupt (struct intr_frame *args UNUSED)
@@ -189,10 +189,12 @@ timer_interrupt (struct intr_frame *args UNUSED)
   /* BLOCO ADVANCED SCHEDULER */
   if (thread_mlfqs) 
   {
-    /* 1. Aumenta recent_cpu da thread atual em 1 a cada tick */
+    /* Aumenta recent_cpu da thread atual em 1 a cada tick, mas só se esta não foi a current thread */
+    if (thread_current() != idle_thread()){
     thread_rec_cpu_increment (thread_current ());
+    }
 
-    /* 2. Recalcula load_avg, decay e recent_cpu de TODAS as threads a cada 1 segundo (TIMER_FREQ) */
+    /* Recalcula load_avg, decay e recent_cpu de TODAS as threads a cada 1 segundo (TIMER_FREQ) */
     if (ticks % TIMER_FREQ == 0) 
     {
       thread_compute_load_avg ();
@@ -200,7 +202,7 @@ timer_interrupt (struct intr_frame *args UNUSED)
       thread_update_rec_cpu_all ();
     }
 
-    /* 3. Recalcula a prioridade de TODAS as threads a cada 4 ticks */
+    /* Recalcula a prioridade de TODAS as threads a cada 4 ticks */
     if (ticks % 4 == 0) 
     {
       thread_update_priority_all ();
@@ -213,6 +215,14 @@ timer_interrupt (struct intr_frame *args UNUSED)
   }
 
   check_wakeup_threads(ticks);
+
+  // if the current thread has lost the highest priority after the updates, it asks for preemption
+  if (thread_mlfqs && !list_empy(&ready_list)){
+    struct thread *top = list_entry (list_begin(&ready_list)), struct thread, elem);
+    if (thread_current() -> priority < top -> priority){
+      intr_yield_on_return();
+    }
+  }
 }
 
 /* Returns true if LOOPS iterations waits for more than one timer

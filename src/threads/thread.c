@@ -447,7 +447,7 @@ thread_get_recent_cpu (void)
 
 // calculates the recent cpu of a given thread (doesn't need to be the current)
 void thread_compute_rec_cpu(struct thread *t){
-  int32_t recent_cpu = decay * t->recent_cpu + t->nice;
+  int32_t recent_cpu = decay * t->recent_cpu + fp_conversion(t->nice);
   t->recent_cpu = recent_cpu;
 }
 
