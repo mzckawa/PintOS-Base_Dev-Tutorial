@@ -101,6 +101,22 @@ sema_try_down (struct semaphore *sema)
   return success;
 }
 
+// function to help testing whether the current thread should yield the CPU or not
+void thread_test_preemption(void){
+
+  if(!list_empty(&ready_list)){
+    struct thread *highest = list_entry (list_begin(&ready_list), struct thread, elem);
+    if (highest->priority > thread_current()->priority){
+      if (intr_context()){
+        intr_yield_on_return();
+      }
+      else{
+        thread_yield();
+      }
+    }
+  }
+}
+
 /* Up or "V" operation on a semaphore.  Increments SEMA's value
    and wakes up one thread of those waiting for SEMA, if any.
 
@@ -113,10 +129,17 @@ sema_up (struct semaphore *sema)
   ASSERT (sema != NULL);
 
   old_level = intr_disable ();
-  if (!list_empty (&sema->waiters)) 
+  if (!list_empty (&sema->waiters)) {
+
+    // ordering the waiters, so that we wake up the one with the highest priority
+    list_sort (&sema->waiters, thread_priority_comparison, NULL);
     thread_unblock (list_entry (list_pop_front (&sema->waiters),
                                 struct thread, elem));
+  }
   sema->value++;
+
+  // if the recently unblocked thread has the highest priority, it yields the CPU now
+  thread_test_preemption();
   intr_set_level (old_level);
 }
 
