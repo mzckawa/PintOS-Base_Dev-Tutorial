@@ -200,6 +200,13 @@ thread_create (const char *name, int priority,
   t->wakeup_tick = 0;
   tid = t->tid = allocate_tid ();
 
+  // if MLFQS is on, the thread inherits nice and recent_cpu from the mother threaed
+  if(thread_mlfqs){
+    t->nice = thread_current()->nice;
+    t->recent_cpu = thread_current()->recent_cpu;
+    thread_compute_priority(t);
+  }
+
   /* Stack frame for kernel_thread(). */
   kf = alloc_frame (t, sizeof *kf);
   kf->eip = NULL;
@@ -447,7 +454,7 @@ thread_get_recent_cpu (void)
 
 // calculates the recent cpu of a given thread (doesn't need to be the current)
 void thread_compute_rec_cpu(struct thread *t){
-  int32_t recent_cpu = decay * t->recent_cpu + fp_conversion(t->nice);
+  int32_t recent_cpu = fp_multip(decay, t->recent_cpu) + fp_conversion(t->nice);
   t->recent_cpu = recent_cpu;
 }
 
@@ -460,7 +467,7 @@ void thread_rec_cpu_increment(struct thread *t){
 }
 
 void thread_compute_decay(void){
-  decay = (2 * load_avg) / (2 * load_avg + 1);
+  decay = fp_division(fp_int_multip(load_avg, 2), fp_int_sum(fp_int_multip(load_avg, 2), 1));
 }
 
 void thread_update_priority_all(void){
