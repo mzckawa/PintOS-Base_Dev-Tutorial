@@ -380,6 +380,9 @@ void thread_compute_priority(struct thread *t){
 void
 thread_set_priority (int new_priority) 
 {
+  /* DESATIVA a prioridade manual se o advanced scheduler estiver ligado */
+  if (thread_mlfqs)
+    return;
   thread_current ()->priority = new_priority;
 }
 
