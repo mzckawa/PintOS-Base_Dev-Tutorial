@@ -7,6 +7,7 @@
 #include "threads/interrupt.h"
 #include "threads/synch.h"
 #include "threads/thread.h"
+#include <string.h>
  
 static int64_t min_tick = -1;
 /* See [8254] for hardware details of the 8254 timer chip. */
@@ -190,8 +191,8 @@ timer_interrupt (struct intr_frame *args UNUSED)
   if (thread_mlfqs) 
   {
     /* Aumenta recent_cpu da thread atual em 1 a cada tick, mas só se esta não foi a current thread */
-    if (thread_current() != idle_thread()){
-    thread_rec_cpu_increment (thread_current ());
+    if (strcmp (thread_current()->name, "idle") != 0){
+      thread_rec_cpu_increment (thread_current ());
     }
 
     /* Recalcula load_avg, decay e recent_cpu de TODAS as threads a cada 1 segundo (TIMER_FREQ) */
