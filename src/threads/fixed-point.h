@@ -33,12 +33,12 @@ static inline int32_t fp_subtraction(int32_t x, int32_t y){
 // sum of a fixed point value and an integer
 static inline int32_t fp_int_sum(int32_t x, int n){
     int32_t sum = fp_to_int_trunc(x) + n;
-    return sum;
+    return fp_conversion(sum);
 }
 
 static inline int32_t fp_int_subtraction(int32_t x, int n){
     int32_t sub = fp_to_int_trunc(x) - n;
-    return sub;
+    return fp_conversion(sub);
 }
 
 static inline int32_t fp_multip(int32_t x, int32_t y){ 
@@ -49,19 +49,20 @@ static inline int32_t fp_multip(int32_t x, int32_t y){
     Since our desired result is X * Y * fp_one, which is the multiplication of the real values in fixed_point format, we will use the integer conversion
     function in order to divide x * y by fp_one.
     */
-    return fp_to_int_trunc((int64_t) x * y);
+    return (int32_t) (((int64_t) x * y) / fp_one);
 }
 
 static inline int32_t fp_int_multip(int32_t x, int n){
-    return fp_to_int_trunc((int64_t) x * n);
+    return x * n;
 }
 
 static inline int32_t fp_division(int32_t x, int32_t y){ 
-    return fp_conversion((int64_t) x / y);
+    // by multiplying by fp_one, we preserve the fixed-point scale (otherwise, it will behave as a common division)
+    return (int32_t) ((int64_t) x * fp_one / y);
 }
 
 static inline int32_t fp_int_division(int32_t x, int n){
-    return fp_conversion((int64_t) x / n);
+    return x / n;
 }
 
 #endif /* threads/fixed-point.h */
